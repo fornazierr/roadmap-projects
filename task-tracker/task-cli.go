@@ -28,7 +28,7 @@ After that load the file into an struct
 */
 func (dbj DBJson) Initialize() error {
 	//if not found the file db.json create a new one
-	checkDir, err := os.ReadDir("/home/fornazierr/Documents/projects/golang/roadmap-projects/task-tracker")
+	checkDir, err := os.ReadDir("./")
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (dbj DBJson) Initialize() error {
 			return err
 		}
 	}
-	fmt.Printf("Dados: %v\n", dbj)
+	// fmt.Printf("Dados: %v\n", dbj)
 
 	dbj.organizeKeys()
 	return nil
@@ -77,9 +77,9 @@ func (dbj DBJson) organizeKeys() {
 /*
 Return a boolean, true if the task exist or false if not.
 */
-func (dbj DBJson) exists(id string) bool {
-	_, exists := dbj[id]
-	return exists
+func (dbj DBJson) exists(id string) (Task, bool) {
+	task, exists := dbj[id]
+	return task, exists
 }
 
 /*
@@ -119,12 +119,26 @@ func (dbj DBJson) Add(description string) {
 		UpdatedAt: fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d-00:00",
 			t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second()),
 	}
-
 	dbj[strconv.Itoa(idTask)] = task
-
-	fmt.Printf("Task added successfully (ID: %v)\n", idTask)
-
 	dbj.saveToFile()
+	fmt.Printf("Task added successfully (ID: %v)\n", idTask)
+}
+
+/*
+Update an task description by your id.
+*/
+func (dbj DBJson) Update(idTask string, description string) {
+	// fmt.Printf("ID: %v, Description: %v\n", idTask, description)
+	task, exists := dbj.exists(idTask)
+	// fmt.Printf("%v", task)
+	if !exists {
+		fmt.Println("Task not found. ID: ", idTask)
+		os.Exit(1)
+	}
+	task.Description = description
+	dbj[idTask] = task
+	dbj.saveToFile()
+	fmt.Printf("Task updated successfully (ID: %v)\n", idTask)
 }
 
 func main() {
@@ -151,10 +165,23 @@ func main() {
 	if command == "add" {
 		//check for enough args to perform this action
 		if len(args) < 2 {
-			fmt.Println("Not enough args to perform an add action. Example:\n     ./task-cli add \"My task here\"")
+			fmt.Println("Not enough args to perform an 'add' action. Example:\n     ./task-cli add \"My task here\"")
 			os.Exit(1)
 		}
 		task := args[1]
 		dbJson.Add(task)
+	}
+
+	// UPDATE COMMAND
+	if command == "update" {
+		// example
+		// task-cli update 1 "Buy groceries and cook dinner"
+		if len(args) < 3 {
+			fmt.Println("Not enough args to perform an 'update' action. Example:\n     ./task-cli update 1 \"Buy groceries and cook dinner\"")
+			os.Exit(1)
+		}
+		idTask := args[1]
+		description := args[2]
+		dbJson.Update(idTask, description)
 	}
 }
