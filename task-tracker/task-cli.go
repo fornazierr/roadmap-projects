@@ -156,7 +156,7 @@ func (dbj DBJson) Delete(idTask string) {
 }
 
 /*
-Mark in progress a task by your id
+Mark in-progress a task by your id
 */
 func (dbj DBJson) MarkInProgress(idTask string) {
 	task, exists := dbj.exists(idTask)
@@ -168,6 +168,21 @@ func (dbj DBJson) MarkInProgress(idTask string) {
 	dbj[idTask] = task
 	dbj.saveToFile()
 	fmt.Printf("Task marked in-progress successfully (ID: %v)\n", idTask)
+}
+
+/*
+Mark done a task by your id
+*/
+func (dbj DBJson) MarkDone(idTask string) {
+	task, exists := dbj.exists(idTask)
+	if !exists {
+		fmt.Println("Task not found, ID: ", idTask)
+		os.Exit(1)
+	}
+	task.Status = "done"
+	dbj[idTask] = task
+	dbj.saveToFile()
+	fmt.Printf("Task marked done successfully (ID: %v)\n", idTask)
 }
 
 func main() {
@@ -234,5 +249,16 @@ func main() {
 		}
 		idTask := args[1]
 		dbJson.MarkInProgress(idTask)
+	}
+
+	// mark-done COMMAND
+	// task-cli mark-done 1
+	if command == "mark-done" {
+		if len(args) < 2 {
+			fmt.Println("Not enough args to perform an 'mark-done' action. Example:\n     ./task-cli mark-done 1")
+			os.Exit(1)
+		}
+		idTask := args[1]
+		dbJson.MarkDone(idTask)
 	}
 }
