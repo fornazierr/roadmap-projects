@@ -113,7 +113,7 @@ func (dbj DBJson) Add(description string) {
 	task := Task{
 		Id:          idTask,
 		Description: description,
-		Status:      "created",
+		Status:      "todo",
 		CreatedAt: fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d-00:00",
 			t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second()),
 		UpdatedAt: fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d-00:00",
@@ -153,6 +153,21 @@ func (dbj DBJson) Delete(idTask string) {
 	delete(dbj, idTask)
 	dbj.saveToFile()
 	fmt.Printf("Task deleted successfully (ID: %v)\n", idTask)
+}
+
+/*
+Mark in progress a task by your id
+*/
+func (dbj DBJson) MarkInProgress(idTask string) {
+	task, exists := dbj.exists(idTask)
+	if !exists {
+		fmt.Println("Task not found, ID: ", idTask)
+		os.Exit(1)
+	}
+	task.Status = "in-progress"
+	dbj[idTask] = task
+	dbj.saveToFile()
+	fmt.Printf("Task marked in-progress successfully (ID: %v)\n", idTask)
 }
 
 func main() {
@@ -208,5 +223,16 @@ func main() {
 		}
 		idTask := args[1]
 		dbJson.Delete(idTask)
+	}
+
+	// mark-in-progress COMMAND
+	// task-cli mark-in-progress 1
+	if command == "mark-in-progress" {
+		if len(args) < 2 {
+			fmt.Println("Not enough args to perform an 'mark-in-progress' action. Example:\n     ./task-cli mark-in-progress 1")
+			os.Exit(1)
+		}
+		idTask := args[1]
+		dbJson.MarkInProgress(idTask)
 	}
 }
