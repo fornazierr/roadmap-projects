@@ -125,7 +125,7 @@ func (dbj DBJson) Add(description string) {
 }
 
 /*
-Update an task description by your id.
+Update a task description by your id.
 */
 func (dbj DBJson) Update(idTask string, description string) {
 	// fmt.Printf("ID: %v, Description: %v\n", idTask, description)
@@ -139,6 +139,20 @@ func (dbj DBJson) Update(idTask string, description string) {
 	dbj[idTask] = task
 	dbj.saveToFile()
 	fmt.Printf("Task updated successfully (ID: %v)\n", idTask)
+}
+
+/*
+Delete a task by your id.
+*/
+func (dbj DBJson) Delete(idTask string) {
+	_, exists := dbj.exists(idTask)
+	if !exists {
+		fmt.Println("Task not found, ID: ", idTask)
+		os.Exit(1)
+	}
+	delete(dbj, idTask)
+	dbj.saveToFile()
+	fmt.Printf("Task deleted successfully (ID: %v)\n", idTask)
 }
 
 func main() {
@@ -162,6 +176,7 @@ func main() {
 	}
 
 	// ADD COMMAND
+	//	task-cli add "Buy groceries"
 	if command == "add" {
 		//check for enough args to perform this action
 		if len(args) < 2 {
@@ -173,9 +188,8 @@ func main() {
 	}
 
 	// UPDATE COMMAND
+	//	task-cli update 1 "Buy groceries and cook dinner"
 	if command == "update" {
-		// example
-		// task-cli update 1 "Buy groceries and cook dinner"
 		if len(args) < 3 {
 			fmt.Println("Not enough args to perform an 'update' action. Example:\n     ./task-cli update 1 \"Buy groceries and cook dinner\"")
 			os.Exit(1)
@@ -183,5 +197,16 @@ func main() {
 		idTask := args[1]
 		description := args[2]
 		dbJson.Update(idTask, description)
+	}
+
+	// DELETE COMMAND
+	//	task-cli delete 1
+	if command == "delete" {
+		if len(args) < 2 {
+			fmt.Println("Not enough args to perform an 'delete' action. Example:\n     ./task-cli delete 1")
+			os.Exit(1)
+		}
+		idTask := args[1]
+		dbJson.Delete(idTask)
 	}
 }
