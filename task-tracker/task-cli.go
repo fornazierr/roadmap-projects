@@ -1,9 +1,11 @@
 package main
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"time"
@@ -97,6 +99,31 @@ func (dbj DBJson) saveToFile() {
 }
 
 /*
+Filter the map by your status [done | todo | in-progress]
+*/
+func (dbj DBJson) filterByStatus(status string) DBJson {
+	d := make(DBJson, 0)
+	for k, v := range dbj {
+		if v.Status == status {
+			d[k] = v
+		}
+	}
+	return d
+}
+
+/*
+Print the list of tasks in a AESTHETIC way (*.*)
+*/
+func (dbj DBJson) aestheticPrint(tasks []Task) {
+	fmt.Printf("|_%6v|_%50v|_%11v|_%40v|_%40v|\n",
+		"ID", "Description", "Status", "Created at", "Updated at")
+	for _, v := range tasks {
+		fmt.Printf("|_%6v|_%50v|_%11v|_%40v|_%40v|\n",
+			v.Id, v.Description, v.Status, v.CreatedAt, v.UpdatedAt)
+	}
+}
+
+/*
 Add a new task
 */
 func (dbj DBJson) Add(description string) {
@@ -128,14 +155,15 @@ func (dbj DBJson) Add(description string) {
 Update a task description by your id.
 */
 func (dbj DBJson) Update(idTask string, description string) {
-	// fmt.Printf("ID: %v, Description: %v\n", idTask, description)
 	task, exists := dbj.exists(idTask)
-	// fmt.Printf("%v", task)
 	if !exists {
 		fmt.Println("Task not found. ID: ", idTask)
 		os.Exit(1)
 	}
+	t := time.Now()
 	task.Description = description
+	task.UpdatedAt = fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d-00:00",
+		t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second())
 	dbj[idTask] = task
 	dbj.saveToFile()
 	fmt.Printf("Task updated successfully (ID: %v)\n", idTask)
@@ -164,7 +192,10 @@ func (dbj DBJson) MarkInProgress(idTask string) {
 		fmt.Println("Task not found, ID: ", idTask)
 		os.Exit(1)
 	}
+	t := time.Now()
 	task.Status = "in-progress"
+	task.UpdatedAt = fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d-00:00",
+		t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second())
 	dbj[idTask] = task
 	dbj.saveToFile()
 	fmt.Printf("Task marked in-progress successfully (ID: %v)\n", idTask)
@@ -179,10 +210,34 @@ func (dbj DBJson) MarkDone(idTask string) {
 		fmt.Println("Task not found, ID: ", idTask)
 		os.Exit(1)
 	}
+	t := time.Now()
 	task.Status = "done"
+	task.UpdatedAt = fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d-00:00",
+		t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second())
 	dbj[idTask] = task
 	dbj.saveToFile()
 	fmt.Printf("Task marked done successfully (ID: %v)\n", idTask)
+}
+
+/*
+List all tasks, optionaly by your status
+*/
+func (dbj DBJson) List(status string) {
+	if status != "" {
+		dbj = dbj.filterByStatus(status)
+	}
+	//creating a list ok Task to apply SortFunc further
+	tasks := make([]Task, 0)
+	for _, v := range dbj {
+		tasks = append(tasks, v)
+	}
+
+	slices.SortFunc(tasks,
+		func(a, b Task) int {
+			return cmp.Compare(a.Id, b.Id)
+		})
+
+	dbj.aestheticPrint(tasks)
 }
 
 func main() {
@@ -260,5 +315,19 @@ func main() {
 		}
 		idTask := args[1]
 		dbJson.MarkDone(idTask)
+	}
+
+	// list COMMAND
+	// task-cli list [done | todo | in-progress]
+	if command == "list" {
+		status := ""
+		if len(args) > 1 {
+			status = args[1]
+		}
+		if status != "" && status != "done" && status != "todo" && status != "in-progress" {
+			fmt.Println("Not enough args to perform an 'list' action by status, please follow the example ahead. Example:\n     ./task-cli list [done | todo | in-progress]")
+			os.Exit(1)
+		}
+		dbJson.List(status)
 	}
 }
