@@ -1,35 +1,39 @@
-# Task tracker
+# Task Tracker
 
-Hi,
+Sample solution for the [task-tracker](https://roadmap.sh/projects/task-tracker) challenge from [roadmap.sh](https://roadmap.sh/).
 
-Welcome to the task tracker cli, in this cli you could ADD, UPDATE, DELETE, MARK as IN-PROGRESS or DONE and list your tasks.
+## How to run
 
-### Steps
-First, you need to download the project via git clone.
-Second, use the following commands below.
+Clone the repository and run the following command:
 
-ADD
-Adding a new task.
-./task-cli add "Your task description"
+```bash
+git clone https://github.com/fornazierr/roadmap-projects.git
+cd roadmap-projects/task-tracker
+```
 
-UPDATE
-Updating an existing task.
-./task-cli update 1 "Updated description"
+Run the following command to build and run the project:
 
-DELETE
-Deleting an existing task.
-./task-cli delete 1
+```bash
+go build -o task-cli.go
+./task-tracker --help # To see the list of available commands
 
-MARK
-Marking a task as in progress or done.
-./task-cli mark-in-progress 1
-./task-cli mark-done 1
+# To add a task
+./task-tracker add "Buy groceries"
 
-LIST
-Listing all tasks
-./task-cli list
+# To update a task
+./task-tracker update 1 "Buy groceries and cook dinner"
 
-Listing tasks by status
-./task-cli list done
-./task-cli list todo
-./task-cli list in-progress
+# To delete a task
+./task-tracker delete 1
+
+# To mark a task as in progress/done/todo
+./task-tracker mark-in-progress 1
+./task-tracker mark-done 1
+./task-tracker mark-todo 1
+
+# To list all tasks
+./task-tracker list
+./task-tracker list done
+./task-tracker list todo
+./task-tracker list in-progress
+```
