@@ -14,7 +14,7 @@ cd /github-activity
 Run the following command to build and run the project:
 
 ```bash
-go build -o github-activity
+go build github-activity.go
 # ./githu-activity username
 ./github-activity fornazierr
 ```
