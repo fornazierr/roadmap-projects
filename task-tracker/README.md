@@ -14,7 +14,7 @@ cd roadmap-projects/task-tracker
 Run the following command to build and run the project:
 
 ```bash
-go build -o task-cli.go
+go build task-cli.go
 
 # To add a task
 ./task-tracker add "Buy groceries"
