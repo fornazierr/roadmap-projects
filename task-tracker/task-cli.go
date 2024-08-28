@@ -73,7 +73,6 @@ func (dbj DBJson) organizeKeys() {
 		dbKeys = append(dbKeys, i)
 	}
 	sort.Ints(dbKeys)
-	fmt.Printf("OrganizeKeys: %v\n", dbKeys)
 }
 
 /*
