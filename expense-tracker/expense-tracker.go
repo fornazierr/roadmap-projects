@@ -180,12 +180,12 @@ func (e Expenses) update(idExpense, description, amount, category string) {
 	var err error
 	expense, bol := e.exists(idExpense)
 	if !bol {
-		fmt.Printf("Expense not found from ID %s", idExpense)
+		fmt.Printf("Expense not found, ID: %s", idExpense)
 		os.Exit(1)
 	}
 	expense.Amount, err = strconv.ParseFloat(amount, 64)
 	if err != nil {
-		fmt.Println("Error converting amount, ", err.Error())
+		fmt.Println("Error converting amount, please use a correct value. Ex.: 2.99", err.Error())
 		os.Exit(1)
 	}
 	expense.Description = description
@@ -196,6 +196,17 @@ func (e Expenses) update(idExpense, description, amount, category string) {
 	e[idExpense] = expense
 	e.writeFile()
 	fmt.Printf("Expense updated, ID %s", idExpense)
+}
+
+func (e Expenses) delete(idExpense string) {
+	_, exists := e.exists(idExpense)
+	if !exists {
+		fmt.Printf("Expense not found, ID: %s", idExpense)
+		os.Exit(1)
+	}
+	delete(e, idExpense)
+	e.writeFile()
+	fmt.Printf("Expense deleted. ID: %s\n", idExpense)
 }
 
 func main() {
@@ -215,19 +226,24 @@ func main() {
 		parseFlags(args[1:])
 		Exp.add(descriptionPtr, amountPtr, categoryPrt)
 	case "update":
-		idExpense, err := strconv.Atoi(args[1])
-		if err != nil {
-			fmt.Println("ID convertion error, ", idExpense)
-			os.Exit(1)
-		}
-		if idExpense <= 0 {
-			fmt.Printf("ID from expense incorrect, ID %d\n", idExpense)
+		idExpense := args[1]
+
+		if idExpense == "" {
+			fmt.Println("ID from Expense are empty. Please informa a valid ID, use the command list to find the desired Expense.")
 			os.Exit(1)
 		}
 		//Custom flags
 		parseFlags(args[2:])
-		Exp.update(strconv.Itoa(idExpense), descriptionPtr, amountPtr, categoryPrt)
+		Exp.update(idExpense, descriptionPtr, amountPtr, categoryPrt)
+	case "delete":
+		//no flags for this guy only the expense ID
+		idExpense := args[1]
+		if idExpense == "" {
+			fmt.Println("ID from Expense are empty. Please informa a valid ID, use the command list to find the desired Expense.")
+			os.Exit(1)
+		}
+		Exp.delete(idExpense)
 	default:
-		fmt.Printf("Command %s not found\n", action)
+		fmt.Printf("Command %s not found.\n", action)
 	}
 }
