@@ -1,1 +1,44 @@
-{"3":{"id":3,"date":"2024-08-28","description":"amarelinha doida","amount":22.9,"category":"general"},"4":{"id":4,"date":"2024-08-28","description":"amarelinha doida","amount":22.9,"category":"general"},"5":{"id":5,"date":"2024-08-29","description":"Xuxa Vol1","amount":22.9,"category":"general"},"6":{"id":6,"date":"2024-08-29","description":"Xuxa Vol1","amount":22.9,"category":"general"},"7":{"id":7,"date":"2024-08-29","description":"Xuxa Vol2","amount":2.9,"category":"aaaaaaaaaaaaa"}}
+{
+    "3": {
+        "id": 3,
+        "date": "2024-08-28",
+        "description": "amarelinha doida",
+        "amount": 1,
+        "category": "general"
+    },
+    "4": {
+        "id": 4,
+        "date": "2024-08-28",
+        "description": "amarelinha doida",
+        "amount": 1,
+        "category": "general"
+    },
+    "5": {
+        "id": 5,
+        "date": "2024-08-29",
+        "description": "Xuxa Vol1",
+        "amount": 1,
+        "category": "general"
+    },
+    "6": {
+        "id": 6,
+        "date": "2024-07-29",
+        "description": "Xuxa Vol1",
+        "amount": 1,
+        "category": "general"
+    },
+    "7": {
+        "id": 7,
+        "date": "2023-12-29",
+        "description": "Xuxa Vol2",
+        "amount": 1,
+        "category": "aaaaaaaaaaaaa"
+    },
+    "8": {
+        "id": 7,
+        "date": "2023-11-29",
+        "description": "Xuxa Vol2",
+        "amount": 1,
+        "category": "aaaaaaaaaaaaa"
+    }
+}
