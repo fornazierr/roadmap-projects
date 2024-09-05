@@ -209,6 +209,22 @@ func (e Expenses) delete(idExpense string) {
 	fmt.Printf("Expense deleted. ID: %s\n", idExpense)
 }
 
+/*
+Check if the args are valid ones
+*/
+func checkSummaryArg(arg string) {
+
+}
+
+func (e Expenses) printSummary(arg string) {
+	checkSummaryArg(arg)
+	var sum float64
+	for _, v := range e {
+		sum += v.Amount
+	}
+	fmt.Println("Total expenses: ", sum)
+}
+
 func main() {
 	//definig the command's action
 	args := os.Args[1:]
@@ -243,6 +259,15 @@ func main() {
 			os.Exit(1)
 		}
 		Exp.delete(idExpense)
+	case "summary":
+		// if len(args) > 1 {
+		// 	args[1]
+		// }
+		Exp.printSummary("summaryArg")
+		os.Exit(1)
+	case "list":
+		fmt.Println("Command not implemented.")
+		os.Exit(1)
 	default:
 		fmt.Printf("Command %s not found.\n", action)
 	}
