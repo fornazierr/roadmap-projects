@@ -111,6 +111,20 @@ func checkFlags() {
 	}
 }
 
+func isHelp(arg string) bool {
+	switch arg {
+	case "-h":
+		return true
+	case "--h":
+		return true
+	case "-help":
+		return true
+	case "--help":
+		return true
+	}
+	return false
+}
+
 /*
 Write data into data.json file
 */
@@ -285,6 +299,16 @@ func (e Expenses) printSummary() {
 	fmt.Println("Total expenses: ", sum)
 }
 
+func (e Expenses) list() {
+	ptrn := "|%-6s|%-30s|%-10s|%-10s|%-15s|\n"
+	fmt.Printf(ptrn, "ID", "EXPENSE", "AMOUNT", "DATE", "CATEGORY")
+	for k, v := range e {
+
+		amount := strconv.FormatFloat(v.Amount, 'f', 4, 32)
+		fmt.Printf(ptrn, k, v.Description, amount, v.Date, v.Category)
+	}
+}
+
 func main() {
 	//definig the command's action
 	args := os.Args[1:]
@@ -319,16 +343,19 @@ func main() {
 		}
 		Exp.delete(idExpense)
 	case "summary":
-		fmt.Println(args)
+		// fmt.Println(args)
 		if len(args) > 1 {
 			parseFlags(args[1:])
 		}
 		Exp.printSummary()
 		os.Exit(1)
 	case "list":
-		fmt.Println("Command not implemented.")
+		Exp.list()
 		os.Exit(1)
 	default:
-		fmt.Printf("Command %s not found.\n", action)
+		if !isHelp(action) {
+			fmt.Printf("Command %s not found.\n", action)
+		}
+		parseFlags(args)
 	}
 }
