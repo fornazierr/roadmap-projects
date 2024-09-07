@@ -25,3 +25,4 @@ go.work.sum
 .env
 
 task-tracker/*.json
+*.json
