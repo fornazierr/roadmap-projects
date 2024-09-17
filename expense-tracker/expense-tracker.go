@@ -22,8 +22,11 @@ type Expenses map[string]Expense
 
 var Exp Expenses
 var dataKeys []int
-var amountArg, descriptionArg, categoryArg, monthArg, yearArg string
+var amountFlag, descriptionFlag, categoryFlag, monthFlag, yearFlag, idFlag string
 var fs *flag.FlagSet
+var commandMessage string
+var command string
+var subCom string
 
 /*
 Check if exists our data.json file, if wasn't, create a new one to store the expense's data
@@ -61,58 +64,90 @@ func dataLoader() error {
 	return nil
 }
 
+func parseFlags(command string, args []string) {
+	fs = flag.NewFlagSet("flags", flag.ContinueOnError)
+
+	initFlags(command)
+	if err := fs.Parse(args); err != nil {
+		fmt.Println("Error starting flagset: ", err.Error())
+	}
+}
+
+func initFlags(command string) {
+	//defining expense program flags
+	t := time.Now()
+	if command == "add" || command == "update" {
+		regFlag(&amountFlag, "amount", "", "(mandatory) expense's amount, example 32.99")
+		regFlag(&descriptionFlag, "description", "", "(mandatory) expense's description, example \"Groceries\"")
+		regFlag(&categoryFlag, "category", "general", "(optional) expense's category, example \"Market\"")
+		regFlag(&idFlag, "id", "", "(mandatory) expense's ID, must be grater than 0. Use list command to gather this value.")
+
+		amountFlag = getFlag("amount")
+		descriptionFlag = getFlag("description")
+		categoryFlag = getFlag("category")
+		idFlag = getFlag("id")
+	}
+
+	if command == "summary" {
+		regFlag(&monthFlag, "month", "", "(optional) month's summary filter, must be between 1 and 12, example 8")
+		regFlag(&yearFlag, "year", strconv.Itoa(t.Year()), "(optional) year's summary filter, example 2012")
+
+		monthFlag = getFlag("month")
+		yearFlag = getFlag("year")
+	}
+
+	if command == "delete" {
+		regFlag(&idFlag, "id", "", "(mandatory) expense's ID, must be grater than 0. Use list command to gather this value.")
+		idFlag = getFlag("id")
+	}
+}
+
+/*
+Registra a FLAG
+*/
 func regFlag(v *string, name, value, usage string) {
 	if fs.Lookup(name) == nil {
 		fs.StringVar(v, name, value, usage)
 	}
 }
 
+/*
+Return the flag value
+*/
 func getFlag(name string) string {
 	return fs.Lookup(name).Value.String()
 }
 
-func init() {
-	fs = flag.NewFlagSet("", flag.ContinueOnError)
-	initFlags()
-	Exp = make(Expenses)
-}
-
-func initFlags() {
-	//defining expense program flags
-	t := time.Now()
-	regFlag(&amountArg, "amount", "", "(mandatory) expense's amount, example 32.99")
-	regFlag(&descriptionArg, "description", "", "(mandatory) expense's description, example \"Groceries\"")
-	regFlag(&categoryArg, "category", "general", "(optional) expense's category, example \"Market\"")
-	regFlag(&monthArg, "month", "", "(optional) month's summary filter, must be between 1 and 12, example 8")
-	regFlag(&yearArg, "year", strconv.Itoa(t.Year()), "(optional) year's summary filter, example 2012")
-
-	amountArg = getFlag("amount")
-	descriptionArg = getFlag("description")
-	categoryArg = getFlag("category")
-	monthArg = getFlag("month")
-	yearArg = getFlag("year")
-}
-
-func parseFlags(args []string) {
-	if err := fs.Parse(args); err != nil {
-		fmt.Println("Error starting flagset: ", err.Error())
+/*
+Checking if the mandatory flags are empty
+*/
+func checkFlags(command string) {
+	if command == "add" || command == "update" {
+		if amountFlag == "" {
+			fmt.Println("amount ", amountFlag)
+			fmt.Println(commandMessage)
+			os.Exit(1)
+		}
+		if descriptionFlag == "" {
+			fmt.Println("description ", descriptionFlag)
+			fmt.Println(commandMessage)
+			os.Exit(1)
+		}
+	}
+	if command == "update" || command == "delete" {
+		if idFlag == "" {
+			fmt.Println("id ", idFlag)
+			fmt.Println(commandMessage)
+			os.Exit(1)
+		}
 	}
 }
 
-func checkFlags() {
-	//checking if the mandatory flags are empty
-	if amountArg == "" {
-		fmt.Println("Amount not specified, plese run ./expense-tracker -h for more details.")
-		os.Exit(1)
-	}
-	if descriptionArg == "" {
-		fmt.Println("Description not specified, plese run ./expense-tracker -h for more details.")
-		os.Exit(1)
-	}
-}
-
-func isHelp(arg string) bool {
-	switch arg {
+/*
+Verify if a flag is a help flag
+*/
+func isHelp() bool {
+	switch subCom {
 	case "-h":
 		return true
 	case "--h":
@@ -166,8 +201,13 @@ func (e Expenses) exists(id string) (Expense, bool) {
 /*
 Add a new Expense
 */
-func (e Expenses) add(description, amount, category string) error {
-	checkFlags()
+func (e Expenses) add(args []string) error {
+	parseFlags("add", args)
+	if isHelp() {
+		fs.PrintDefaults()
+		os.Exit(1)
+	}
+	checkFlags("add")
 	var idExpense int
 	if len(dataKeys) == 0 {
 		idExpense = 1
@@ -177,56 +217,70 @@ func (e Expenses) add(description, amount, category string) error {
 	dataKeys = append(dataKeys, idExpense)
 	t := time.Now()
 
-	f, err := strconv.ParseFloat(amount, 64)
+	f, err := strconv.ParseFloat(amountFlag, 64)
 	if err != nil {
 		return err
 	}
 	expense := Expense{
 		Id:          idExpense,
-		Description: description,
+		Description: descriptionFlag,
 		Amount:      f,
-		Category:    category,
+		Category:    categoryFlag,
 		Date:        fmt.Sprintf("%d-%02d-%02d", t.Year(), t.Month(), t.Day()),
 	}
-
+	fmt.Println("idExpense: ", idExpense)
 	e[strconv.Itoa(idExpense)] = expense
 	e.writeFile()
 	fmt.Println("ID:", idExpense)
 	return nil
 }
 
-func (e Expenses) update(idExpense, description, amount, category string) {
-	checkFlags()
-	var err error
-	expense, bol := e.exists(idExpense)
-	if !bol {
-		fmt.Printf("Expense not found, ID: %s", idExpense)
+func (e Expenses) update(args []string) {
+	parseFlags("update", args)
+	if isHelp() {
+		fs.PrintDefaults()
 		os.Exit(1)
 	}
-	expense.Amount, err = strconv.ParseFloat(amount, 64)
+	checkFlags("update")
+	var err error
+	expense, bol := e.exists(idFlag)
+	if !bol {
+		fmt.Printf("Expense not found, ID: %s", idFlag)
+		os.Exit(1)
+	}
+	expense.Amount, err = strconv.ParseFloat(amountFlag, 64)
 	if err != nil {
 		fmt.Println("Error converting amount, please use a correct value. Ex.: 2.99", err.Error())
 		os.Exit(1)
 	}
-	expense.Description = description
+	expense.Description = descriptionFlag
 	//prevent the default category override custom category
-	if category != "general" {
-		expense.Category = category
+	if categoryFlag != "general" {
+		expense.Category = categoryFlag
 	}
-	e[idExpense] = expense
+	e[idFlag] = expense
 	e.writeFile()
-	fmt.Printf("Expense updated, ID %s", idExpense)
+	fmt.Printf("Expense updated, ID %s", idFlag)
 }
 
-func (e Expenses) delete(idExpense string) {
-	_, exists := e.exists(idExpense)
-	if !exists {
-		fmt.Printf("Expense not found, ID: %s", idExpense)
+/*
+Delete a expense bby your ID
+*/
+func (e Expenses) delete(args []string) {
+	parseFlags("delete", args)
+	if isHelp() {
+		fs.PrintDefaults()
 		os.Exit(1)
 	}
-	delete(e, idExpense)
+	checkFlags("delete")
+	_, exists := e.exists(idFlag)
+	if !exists {
+		fmt.Printf("Expense not found, ID: %s", idFlag)
+		os.Exit(1)
+	}
+	delete(e, idFlag)
 	e.writeFile()
-	fmt.Printf("Expense deleted. ID: %s\n", idExpense)
+	fmt.Printf("Expense deleted. ID: %s\n", idFlag)
 }
 
 /*
@@ -260,7 +314,7 @@ func (e *Expenses) filterByMonth() Expenses {
 	ret := make(Expenses, 0)
 	for k, v := range *e {
 		m := strings.Split(v.Date, "-")
-		if validateMonth(monthArg, m[1]) {
+		if validateMonth(monthFlag, m[1]) {
 			ret[k] = v
 		}
 	}
@@ -274,7 +328,7 @@ func (e *Expenses) filterByYear() Expenses {
 	ret := make(Expenses, 0)
 	for k, v := range *e {
 		y := strings.Split(v.Date, "-")
-		if yearArg == y[0] {
+		if yearFlag == y[0] {
 			ret[k] = v
 		}
 	}
@@ -284,13 +338,18 @@ func (e *Expenses) filterByYear() Expenses {
 /*
 Print the summary
 */
-func (e Expenses) printSummary() {
+func (e Expenses) printSummary(args []string) {
+	parseFlags("summary", args)
+	if isHelp() {
+		fs.PrintDefaults()
+		os.Exit(1)
+	}
 	var sum float64
 	var aux Expenses
-	if yearArg != "" {
+	if yearFlag != "" {
 		aux = e.filterByYear()
 	}
-	if monthArg != "" {
+	if monthFlag != "" {
 		aux = aux.filterByMonth()
 	}
 	for _, v := range aux {
@@ -303,59 +362,45 @@ func (e Expenses) list() {
 	ptrn := "|%-6s|%-30s|%-10s|%-10s|%-15s|\n"
 	fmt.Printf(ptrn, "ID", "EXPENSE", "AMOUNT", "DATE", "CATEGORY")
 	for k, v := range e {
-
 		amount := strconv.FormatFloat(v.Amount, 'f', 4, 32)
 		fmt.Printf(ptrn, k, v.Description, amount, v.Date, v.Category)
 	}
 }
 
 func main() {
+	commandMessage = "Parameter not specified, plese run ./expense-tracker command -h for more details."
 	//definig the command's action
 	args := os.Args[1:]
-	action := args[0]
+	command = args[0]
+	if len(args) > 1 {
+		subCom = args[1]
+	}
+
+	//start map
+	Exp = make(Expenses)
 	//Load data from data.json file
 	dataLoader()
-	// fmt.Println("Description: ", descriptionPtr)
-	// fmt.Println("Amount: ", amountPtr)
-	// fmt.Println("Category: ", categoryPrt)
 
 	//switch between the commands
-	switch action {
+	switch command {
 	case "add":
 		//Custom flags
-		parseFlags(args[1:])
-		Exp.add(descriptionArg, amountArg, categoryArg)
+		Exp.add(args[1:])
+		os.Exit(1)
 	case "update":
-		idExpense := args[1]
-		if idExpense == "" {
-			fmt.Println("ID from Expense are empty. Please informa a valid ID, use the command list to find the desired Expense.")
-			os.Exit(1)
-		}
 		//Custom flags
-		parseFlags(args[2:])
-		Exp.update(idExpense, descriptionArg, amountArg, categoryArg)
+		Exp.update(args[1:])
+		os.Exit(1)
 	case "delete":
-		//no flags for this guy only the expense ID
-		idExpense := args[1]
-		if idExpense == "" {
-			fmt.Println("ID from Expense are empty. Please informa a valid ID, use the command list to find the desired Expense.")
-			os.Exit(1)
-		}
-		Exp.delete(idExpense)
+		Exp.delete(args[1:])
+		os.Exit(1)
 	case "summary":
-		// fmt.Println(args)
-		if len(args) > 1 {
-			parseFlags(args[1:])
-		}
-		Exp.printSummary()
+		Exp.printSummary(args[1:])
 		os.Exit(1)
 	case "list":
 		Exp.list()
 		os.Exit(1)
 	default:
-		if !isHelp(action) {
-			fmt.Printf("Command %s not found.\n", action)
-		}
-		parseFlags(args)
+		fmt.Println("hi")
 	}
 }
