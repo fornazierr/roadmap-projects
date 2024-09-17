@@ -41,6 +41,11 @@ List command
 #|1     |2 pao de queijo               |2.9900    |2024-09-16|food           |
 ```
 
+
+
+
+Project URL:https://roadmap.sh/projects/expense-tracker
+
 Delete command
 ```bash
 ./expense-tracker delete --id=1
